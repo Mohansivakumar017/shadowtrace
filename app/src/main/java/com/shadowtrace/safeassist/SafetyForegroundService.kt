@@ -23,6 +23,10 @@ class SafetyForegroundService : Service() {
     private val stallDetector = StallDetector()
     private lateinit var alertDispatcher: AlertDispatcher
     private lateinit var contactsRepository: TrustedContactsRepository
+    private val escalationDelayMs: Long by lazy {
+        getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getLong(KEY_ESCALATION_DELAY_MS, DEFAULT_ESCALATION_DELAY_MS)
+    }
 
     private var promptIssuedAt: Long? = null
 
@@ -92,7 +96,7 @@ class SafetyForegroundService : Service() {
         }
 
         val promptStart = promptIssuedAt ?: return
-        if (now - promptStart >= ESCALATION_DELAY_MS) {
+        if (now - promptStart >= escalationDelayMs) {
             val contacts = contactsRepository.loadContacts()
             alertDispatcher.dispatchEmergencyAlert(
                 contacts,
@@ -165,7 +169,9 @@ class SafetyForegroundService : Service() {
     companion object {
         private const val CHANNEL_ID = "safeassist_monitor"
         private const val NOTIFICATION_ID = 1001
-        private const val ESCALATION_DELAY_MS = 60_000L
+        private const val PREFS_NAME = "safeassist_prefs"
+        private const val KEY_ESCALATION_DELAY_MS = "escalation_delay_ms"
+        private const val DEFAULT_ESCALATION_DELAY_MS = 60_000L
 
         const val ACTION_STOP = "com.shadowtrace.safeassist.ACTION_STOP"
         const val ACTION_STATUS = "com.shadowtrace.safeassist.ACTION_STATUS"

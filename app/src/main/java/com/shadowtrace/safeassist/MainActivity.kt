@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -155,7 +156,18 @@ private fun VoiceTrigger(
         Manifest.permission.RECORD_AUDIO
     ) == PackageManager.PERMISSION_GRANTED
 
-    if (!hasMicPermission || !isListeningEnabled || !SpeechRecognizer.isRecognitionAvailable(context)) return
+    if (!isListeningEnabled) {
+        Log.d(VOICE_TAG, "Voice trigger disabled by app state.")
+        return
+    }
+    if (!hasMicPermission) {
+        Log.d(VOICE_TAG, "Voice trigger inactive: RECORD_AUDIO permission not granted.")
+        return
+    }
+    if (!SpeechRecognizer.isRecognitionAvailable(context)) {
+        Log.w(VOICE_TAG, "Voice trigger inactive: speech recognition unavailable on this device.")
+        return
+    }
 
     val recognizer = remember { SpeechRecognizer.createSpeechRecognizer(context) }
     DisposableEffect(Unit) {
@@ -194,3 +206,5 @@ private fun VoiceTrigger(
         }
     }
 }
+
+private const val VOICE_TAG = "SafeAssistVoice"

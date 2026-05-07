@@ -23,4 +23,4 @@ Kotlin Android implementation of an intelligent monitoring and smart assistant s
 
 ## Notes
 - Runtime permissions are requested in app startup.
-- IMEI-based tracking is intentionally not implemented due modern Android privacy/security restrictions.
+- IMEI-based tracking is intentionally not implemented due to modern Android privacy/security restrictions.
