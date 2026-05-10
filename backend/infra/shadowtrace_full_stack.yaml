@@ -1,0 +1,724 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'ShadowTrace - Personal Safety Travel App Complete Infrastructure'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, prod]
+    Description: Environment name
+
+  OWMApiKey:
+    Type: String
+    NoEcho: true
+    Description: OpenWeatherMap API key for weather data
+
+Resources:
+  ShadowTraceUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: shadowtrace-pool
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: false
+      Schema:
+        - Name: email
+          AttributeDataType: String
+          Mutable: true
+          Required: true
+        - Name: name
+          AttributeDataType: String
+          Mutable: true
+      AutoVerifiedAttributes:
+        - email
+      MfaConfiguration: OPTIONAL
+      Tags:
+        Project: ShadowTrace
+        Environment: !Ref Environment
+
+  ShadowTraceUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref ShadowTraceUserPool
+      ClientName: shadowtrace-mobile
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+      AllowedOAuthFlows:
+        - code
+      AllowedOAuthScopes:
+        - email
+        - openid
+      CallbackURLs:
+        - 'myapp://callback'
+      LogoutURLs:
+        - 'myapp://logout'
+
+  ShadowTraceIdentityPool:
+    Type: AWS::Cognito::IdentityPool
+    Properties:
+      IdentityPoolName: shadowtrace-identity-pool
+      AllowUnauthenticatedIdentities: true
+      CognitoIdentityProviders:
+        - ClientId: !Ref ShadowTraceUserPoolClient
+          ProviderName: !GetAtt ShadowTraceUserPool.ProviderName
+
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: shadowtrace-lambda-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DynamoDBAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:GetItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                Resource:
+                  - !GetAtt TripsTable.Arn
+                  - !GetAtt LocationsTable.Arn
+                  - !GetAtt AlertsTable.Arn
+                  - !GetAtt DeviceTokensTable.Arn
+                  - !Sub '${TripsTable.Arn}/index/*'
+        - PolicyName: SNSAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource: !Ref ShadowTraceSNSTopic
+        - PolicyName: LocationServiceAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - geo:BatchUpdateDevicePosition
+                  - geo:GetDevicePosition
+                  - geo:CalculateRoute
+                  - geo:CalculateRouteMatrix
+                  - geo:SearchPlaceIndexForPosition
+                  - geo:PutGeofence
+                  - geo:AssociateTrackerConsumer
+                Resource: '*'
+        - PolicyName: StepFunctionsAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - states:StartExecution
+                  - states:SendTaskHeartbeat
+                Resource: !GetAtt EmergencyWorkflow.Arn
+
+  UnauthenticatedRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: shadowtrace-unauth-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: cognito-identity.amazonaws.com
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                'cognito-identity.amazonaws.com:aud': !Ref ShadowTraceIdentityPool
+      Policies:
+        - PolicyName: LocationServiceRead
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - geo:GetMap*
+                  - geo:GetPlace*
+                Resource: '*'
+
+  TripsTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: shadowtrace-trips
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: tripId
+          AttributeType: S
+        - AttributeName: status
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+        - AttributeName: tripId
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: UserIdStatusIndex
+          KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+            - AttributeName: status
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      Tags:
+        - Key: Project
+          Value: ShadowTrace
+        - Key: Environment
+          Value: !Ref Environment
+
+  LocationsTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: shadowtrace-locations
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: tripId
+          AttributeType: S
+        - AttributeName: timestamp
+          AttributeType: S
+      KeySchema:
+        - AttributeName: tripId
+          KeyType: HASH
+        - AttributeName: timestamp
+          KeyType: RANGE
+      TimeToLiveSpecification:
+        Enabled: true
+        AttributeName: ttl
+      Tags:
+        - Key: Project
+          Value: ShadowTrace
+        - Key: Environment
+          Value: !Ref Environment
+
+  AlertsTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: shadowtrace-alerts
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: alertId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: alertId
+          KeyType: HASH
+      Tags:
+        - Key: Project
+          Value: ShadowTrace
+        - Key: Environment
+          Value: !Ref Environment
+
+  DeviceTokensTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: shadowtrace-device-tokens
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+      Tags:
+        - Key: Project
+          Value: ShadowTrace
+        - Key: Environment
+          Value: !Ref Environment
+
+  ShadowTraceSNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: shadowtrace-sns
+      Tags:
+        - Key: Project
+          Value: ShadowTrace
+        - Key: Environment
+          Value: !Ref Environment
+
+  ShadowTraceTracker:
+    Type: AWS::Location::Tracker
+    Properties:
+      TrackerName: shadowtrace-tracker
+      Description: Real-time device tracking
+      Tags:
+        Project: ShadowTrace
+        Environment: !Ref Environment
+
+  ShadowTraceRouteCalculator:
+    Type: AWS::Location::RouteCalculator
+    Properties:
+      CalculatorName: shadowtrace-route-calc
+      DataSource: Esri
+      Tags:
+        Project: ShadowTrace
+        Environment: !Ref Environment
+
+  ShadowTraceGeofenceCollection:
+    Type: AWS::Location::GeofenceCollection
+    Properties:
+      CollectionName: shadowtrace-routes
+      Description: Route corridor geofences
+      Tags:
+        Project: ShadowTrace
+        Environment: !Ref Environment
+
+  ShadowTracePlaceIndex:
+    Type: AWS::Location::PlaceIndex
+    Properties:
+      IndexName: shadowtrace-place-index
+      DataSource: Esri
+      Tags:
+        Project: ShadowTrace
+        Environment: !Ref Environment
+
+  StepFunctionsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: states.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: StepFunctionsPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource: !Ref ShadowTraceSNSTopic
+              - Effect: Allow
+                Action:
+                  - dynamodb:UpdateItem
+                Resource: !GetAtt TripsTable.Arn
+
+  EmergencyWorkflow:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineType: STANDARD
+      RoleArn: !GetAtt StepFunctionsRole.Arn
+      DefinitionString: !Sub |
+        {
+          "Comment": "ShadowTrace Emergency Workflow",
+          "StartAt": "WaitForHeartbeat",
+          "States": {
+            "WaitForHeartbeat": {
+              "Type": "Wait",
+              "Seconds": 300,
+              "Next": "TripCompleted"
+            },
+            "TripCompleted": {
+              "Type": "Succeed"
+            }
+          }
+        }
+      Tags:
+        - Key: Project
+          Value: ShadowTrace
+        - Key: Environment
+          Value: !Ref Environment
+
+  SOSFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: sos
+      Runtime: nodejs18.x
+      Handler: index.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 30
+      Environment:
+        Variables:
+          ALERTS_TABLE: !Ref AlertsTable
+          TRIPS_TABLE: !Ref TripsTable
+          SNS_TOPIC_ARN: !Ref ShadowTraceSNSTopic
+          EMERGENCY_WORKFLOW_ARN: !Ref EmergencyWorkflow
+          COGNITO_USER_POOL_ID: !Ref ShadowTraceUserPool
+          COGNITO_CLIENT_ID: !Ref ShadowTraceUserPoolClient
+      Code:
+        ZipFile: |
+          exports.handler = async (event) => {
+            return { statusCode: 200, body: JSON.stringify({ message: 'OK' }) };
+          };
+      Tags:
+        - Key: Project
+          Value: ShadowTrace
+        - Key: Environment
+          Value: !Ref Environment
+
+  UpdateLocationFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: update_live_location
+      Runtime: nodejs18.x
+      Handler: index.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 30
+      Environment:
+        Variables:
+          LOCATIONS_TABLE: !Ref LocationsTable
+          TRIPS_TABLE: !Ref TripsTable
+          COGNITO_USER_POOL_ID: !Ref ShadowTraceUserPool
+          COGNITO_CLIENT_ID: !Ref ShadowTraceUserPoolClient
+      Code:
+        ZipFile: |
+          exports.handler = async (event) => {
+            return { statusCode: 200, body: JSON.stringify({ message: 'OK' }) };
+          };
+      Tags:
+        - Key: Project
+          Value: ShadowTrace
+        - Key: Environment
+          Value: !Ref Environment
+
+  DeadZoneTimerFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: dead_zone_timer
+      Runtime: nodejs18.x
+      Handler: index.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 30
+      Environment:
+        Variables:
+          TRIPS_TABLE: !Ref TripsTable
+          SNS_TOPIC_ARN: !Ref ShadowTraceSNSTopic
+      Code:
+        ZipFile: |
+          exports.handler = async (event) => {
+            return { statusCode: 200, body: JSON.stringify({ message: 'OK' }) };
+          };
+      Tags:
+        - Key: Project
+          Value: ShadowTrace
+        - Key: Environment
+          Value: !Ref Environment
+
+  RouteCalcFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: route_calc
+      Runtime: nodejs18.x
+      Handler: index.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 30
+      Environment:
+        Variables:
+          TRIPS_TABLE: !Ref TripsTable
+          OWM_KEY: !Ref OWMApiKey
+          AWS_REGION: !Ref AWS::Region
+          AWS_ACCOUNT_ID: !Ref AWS::AccountId
+          COGNITO_USER_POOL_ID: !Ref ShadowTraceUserPool
+          COGNITO_CLIENT_ID: !Ref ShadowTraceUserPoolClient
+      Code:
+        ZipFile: |
+          exports.handler = async (event) => {
+            return { statusCode: 200, body: JSON.stringify({ message: 'OK' }) };
+          };
+      Tags:
+        - Key: Project
+          Value: ShadowTrace
+        - Key: Environment
+          Value: !Ref Environment
+
+  AlertDispatchFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: alert_dispatch
+      Runtime: nodejs18.x
+      Handler: index.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 30
+      Environment:
+        Variables:
+          TRIPS_TABLE: !Ref TripsTable
+          CONTACTS_TABLE: shadowtrace-contacts
+          SNS_TOPIC_ARN: !Ref ShadowTraceSNSTopic
+      Code:
+        ZipFile: |
+          exports.handler = async (event) => {
+            return { statusCode: 200, body: JSON.stringify({ message: 'OK' }) };
+          };
+      Tags:
+        - Key: Project
+          Value: ShadowTrace
+        - Key: Environment
+          Value: !Ref Environment
+
+  SafetyScoreFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: safety_score
+      Runtime: nodejs18.x
+      Handler: index.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 30
+      Environment:
+        Variables:
+          LOCATIONS_TABLE: !Ref LocationsTable
+          TRIPS_TABLE: !Ref TripsTable
+          COGNITO_USER_POOL_ID: !Ref ShadowTraceUserPool
+          COGNITO_CLIENT_ID: !Ref ShadowTraceUserPoolClient
+      Code:
+        ZipFile: |
+          exports.handler = async (event) => {
+            return { statusCode: 200, body: JSON.stringify({ message: 'OK' }) };
+          };
+      Tags:
+        - Key: Project
+          Value: ShadowTrace
+        - Key: Environment
+          Value: !Ref Environment
+
+  ShadowTraceAPI:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: shadowtrace-api
+      ProtocolType: HTTP
+      CorsConfiguration:
+        AllowOrigins:
+          - '*'
+        AllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+        AllowHeaders:
+          - '*'
+      Tags:
+        Project: ShadowTrace
+        Environment: !Ref Environment
+
+  APIAuthorizer:
+    Type: AWS::ApiGatewayV2::Authorizer
+    Properties:
+      ApiId: !Ref ShadowTraceAPI
+      AuthorizerType: JWT
+      IdentitySource: $request.header.Authorization
+      JwtConfiguration:
+        Audience:
+          - !Ref ShadowTraceUserPoolClient
+        Issuer: !Sub 'https://cognito-idp.${AWS::Region}.amazonaws.com/${ShadowTraceUserPool}'
+      Name: ShadowTraceAuthorizer
+
+  SOSIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref ShadowTraceAPI
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub 'arn:aws:apigatewayv2:${AWS::Region}:lambda:path/2015-03-31/functions/${SOSFunction.Arn}/invocations'
+      PayloadFormatVersion: '2.0'
+
+  SOSRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ShadowTraceAPI
+      RouteKey: 'POST /sos'
+      AuthorizationType: JWT
+      AuthorizerId: !Ref APIAuthorizer
+      Target: !Sub 'integrations/${SOSIntegration}'
+
+  LocationIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref ShadowTraceAPI
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub 'arn:aws:apigatewayv2:${AWS::Region}:lambda:path/2015-03-31/functions/${UpdateLocationFunction.Arn}/invocations'
+      PayloadFormatVersion: '2.0'
+
+  LocationRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ShadowTraceAPI
+      RouteKey: 'POST /location'
+      AuthorizationType: JWT
+      AuthorizerId: !Ref APIAuthorizer
+      Target: !Sub 'integrations/${LocationIntegration}'
+
+  RouteCalcIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref ShadowTraceAPI
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub 'arn:aws:apigatewayv2:${AWS::Region}:lambda:path/2015-03-31/functions/${RouteCalcFunction.Arn}/invocations'
+      PayloadFormatVersion: '2.0'
+
+  RouteCalcRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ShadowTraceAPI
+      RouteKey: 'POST /route'
+      AuthorizationType: JWT
+      AuthorizerId: !Ref APIAuthorizer
+      Target: !Sub 'integrations/${RouteCalcIntegration}'
+
+  SafetyScoreIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref ShadowTraceAPI
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub 'arn:aws:apigatewayv2:${AWS::Region}:lambda:path/2015-03-31/functions/${SafetyScoreFunction.Arn}/invocations'
+      PayloadFormatVersion: '2.0'
+
+  SafetyScoreRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ShadowTraceAPI
+      RouteKey: 'POST /safety-score'
+      AuthorizationType: JWT
+      AuthorizerId: !Ref APIAuthorizer
+      Target: !Sub 'integrations/${SafetyScoreIntegration}'
+
+  APIStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref ShadowTraceAPI
+      StageName: !Ref Environment
+      AutoDeploy: true
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 5000
+        ThrottlingRateLimit: 2000
+
+  GeofenceExitRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: shadowtrace-geofence-exit
+      EventPattern:
+        source:
+          - aws.geo
+        detail-type:
+          - Location Geofence Event
+        detail:
+          EventType:
+            - EXIT
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt AlertDispatchFunction.Arn
+          RoleArn: !GetAtt EventBridgeRole.Arn
+
+  EventBridgeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: InvokeLambda
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource: !GetAtt AlertDispatchFunction.Arn
+
+  SOSLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref SOSFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ShadowTraceAPI}/*/*'
+
+  LocationLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref UpdateLocationFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ShadowTraceAPI}/*/*'
+
+  RouteCalcLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref RouteCalcFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ShadowTraceAPI}/*/*'
+
+  SafetyScoreLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref SafetyScoreFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ShadowTraceAPI}/*/*'
+
+Outputs:
+  APIEndpoint:
+    Description: API Gateway endpoint
+    Value: !Sub 'https://${ShadowTraceAPI}.execute-api.${AWS::Region}.amazonaws.com/${Environment}'
+    Export:
+      Name: ShadowTraceAPIEndpoint
+
+  UserPoolId:
+    Description: Cognito User Pool ID
+    Value: !Ref ShadowTraceUserPool
+    Export:
+      Name: ShadowTraceUserPoolId
+
+  UserPoolClientId:
+    Description: Cognito User Pool Client ID
+    Value: !Ref ShadowTraceUserPoolClient
+    Export:
+      Name: ShadowTraceUserPoolClientId
+
+  IdentityPoolId:
+    Description: Cognito Identity Pool ID
+    Value: !Ref ShadowTraceIdentityPool
+    Export:
+      Name: ShadowTraceIdentityPoolId
+
+  SNSTopicArn:
+    Description: SNS Topic ARN for alerts
+    Value: !Ref ShadowTraceSNSTopic
+    Export:
+      Name: ShadowTraceSNSTopicArn
+
+  TrackerName:
+    Description: Location Tracker Name
+    Value: !Ref ShadowTraceTracker
+    Export:
+      Name: ShadowTraceTrackerName
+
+  RouteCalculatorName:
+    Description: Route Calculator Name
+    Value: !Ref ShadowTraceRouteCalculator
+    Export:
+      Name: ShadowTraceRouteCalculatorName

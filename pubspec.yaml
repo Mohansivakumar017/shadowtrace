@@ -1,0 +1,65 @@
+name: shadowtrace
+description: "ShadowTrace – Personal Safety Travel App with Real-Time Tracking"
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # AWS & Cognito
+  amplify_flutter: ^2.3.0
+  amplify_auth_cognito: ^2.3.0
+  aws_common: ^0.3.0
+  aws_sigv4: ^0.1.0
+
+  # Maps & Location
+  maplibre_gl: ^0.18.0
+  geolocator: ^9.0.2
+  latlong2: ^0.9.1
+
+  # Speech & Voice
+  speech_to_text: ^6.3.0
+
+  # HTTP & Networking
+  http: ^1.1.0
+  connectivity_plus: ^5.0.2
+  web_socket_channel: ^2.4.0
+
+  # Local Storage & Persistence
+  sqflite: ^2.2.8
+  flutter_secure_storage: ^9.0.2
+  shared_preferences: ^2.1.1
+
+  # State Management & DI
+  get_it: ^7.5.0
+  provider: ^6.0.0
+  riverpod: ^2.4.0
+  flutter_riverpod: ^2.4.0
+
+  # Hardware & Device
+  vibration: ^1.8.4
+  local_notifications: ^0.0.1
+  permission_handler: ^11.4.1
+
+  # UI & Utilities
+  cupertino_icons: ^1.0.2
+  google_fonts: ^5.1.0
+  lottie: ^2.7.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/animations/
+    - assets/sounds/
+    - assets/images/
+    - assets/

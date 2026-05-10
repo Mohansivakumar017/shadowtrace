@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1043326814519",
+    "project_id": "shadowtrace-75693",
+    "storage_bucket": "shadowtrace-75693.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1043326814519:android:35fb078a0f637b580472b2",
+        "android_client_info": {
+          "package_name": "com.example.shadowtrace_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAF8E8nrQK_H73e03wojQX0kfoXIjxc_ew"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

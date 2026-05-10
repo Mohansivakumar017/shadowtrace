@@ -1,0 +1,82 @@
+{
+  "Comment": "ShadowTrace Emergency Workflow - Dead Zone Detection and Alert Escalation",
+  "StartAt": "WaitForHeartbeat",
+  "States": {
+    "WaitForHeartbeat": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+      "Parameters": {
+        "FunctionName": "dead_zone_timer",
+        "Payload": {
+          "tripId.$": "$.tripId",
+          "userId.$": "$.userId",
+          "taskToken.$": "$$.Task.Token"
+        }
+      },
+      "HeartbeatSeconds": 300,
+      "Catch": [
+        {
+          "ErrorEquals": ["States.HeartbeatTimeout"],
+          "Next": "TriggerAlert"
+        }
+      ],
+      "Next": "TripCompleted"
+    },
+    "TriggerAlert": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:ap-south-1:ACCOUNT_ID:function:alert_dispatch",
+      "Parameters": {
+        "detail": {
+          "DeviceId.$": "$.userId",
+          "Position": [0, 0]
+        }
+      },
+      "Next": "NotifyContacts"
+    },
+    "NotifyContacts": {
+      "Type": "Task",
+      "Resource": "arn:aws:sns:ap-south-1:ACCOUNT_ID:shadowtrace-sns",
+      "Parameters": {
+        "TopicArn": "arn:aws:sns:ap-south-1:ACCOUNT_ID:shadowtrace-sns",
+        "Subject": "EMERGENCY: User Unresponsive - Dead Zone Timeout",
+        "Message.$": "States.JsonToString($.)"
+      },
+      "Next": "UpdateTripStatus"
+    },
+    "UpdateTripStatus": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:updateItem",
+      "Parameters": {
+        "TableName": "shadowtrace-trips",
+        "Key": {
+          "userId": {
+            "S.$": "$.userId"
+          },
+          "tripId": {
+            "S.$": "$.tripId"
+          }
+        },
+        "UpdateExpression": "SET #status = :status, #updated = :timestamp",
+        "ExpressionAttributeNames": {
+          "#status": "status",
+          "#updated": "updatedAt"
+        },
+        "ExpressionAttributeValues": {
+          ":status": {
+            "S": "EMERGENCY_ALERT"
+          },
+          ":timestamp": {
+            "S.$": "$$.State.EnteredTime"
+          }
+        }
+      },
+      "Next": "EmergencyEnd"
+    },
+    "EmergencyEnd": {
+      "Type": "Succeed"
+    },
+    "TripCompleted": {
+      "Type": "Succeed"
+    }
+  }
+}
