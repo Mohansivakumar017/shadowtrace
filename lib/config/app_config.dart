@@ -20,6 +20,11 @@ class AppConfig {
   static const String safetyScoreEndpoint = '$alertApiBase/safety-score';
   static const String contactsEndpoint = '$alertApiBase/contacts';
 
+  // Additional endpoints (same base as location API)
+  static const String routeEndpoint = '$locationApiBase/route';
+  static const String tripEndpoint = '$locationApiBase/trip';
+  static const String devicePositionEndpoint = '$locationApiBase/device-position';
+
   // AWS config
   static const String awsRegion = 'us-east-1';
   static const String alsTrackerName = 'shadowtrace-tracker';

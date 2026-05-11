@@ -28,7 +28,7 @@ class RouteService {
       final idToken = _getTokenString(session);
 
       final response = await http.post(
-        Uri.parse('${AppConfig.apiBaseUrl}/route'),
+        Uri.parse('${AppConfig.routeEndpoint}'),
         headers: {
           'Authorization': 'Bearer $idToken',
           'Content-Type': 'application/json',
@@ -62,7 +62,7 @@ class RouteService {
       final idToken = _getTokenString(session);
 
       final response = await http.post(
-        Uri.parse('${AppConfig.apiBaseUrl}/trip/end'),
+        Uri.parse('${AppConfig.tripEndpoint}/end'),
         headers: {
           'Authorization': 'Bearer $idToken',
           'Content-Type': 'application/json',
@@ -87,7 +87,7 @@ class RouteService {
       final idToken = _getTokenString(session);
 
       final response = await http.get(
-        Uri.parse('${AppConfig.apiBaseUrl}/device-position/$userId'),
+        Uri.parse('${AppConfig.devicePositionEndpoint}/$userId'),
         headers: {
           'Authorization': 'Bearer $idToken',
         },

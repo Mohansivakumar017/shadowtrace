@@ -13,7 +13,7 @@ class VoiceCommandScreen extends StatefulWidget {
 
 class _VoiceCommandScreenState extends State<VoiceCommandScreen> {
   late stt.SpeechToText _speechToText;
-  final SOSService _sosService = SOSService();
+  final SosService _sosService = SosService();
   final LocationService _locationService = LocationService();
 
   bool _isListening = false;
@@ -83,7 +83,12 @@ class _VoiceCommandScreenState extends State<VoiceCommandScreen> {
   Future<void> _triggerVoiceSOS() async {
     final location = _locationService.getLastKnownPosition();
     if (location != null) {
-      await _sosService.triggerSOS(location.latitude, location.longitude);
+      await _sosService.triggerVoiceSOS(
+        'user-default',
+        tripId: null,
+        lat: location.latitude,
+        lng: location.longitude,
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

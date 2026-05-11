@@ -26,18 +26,19 @@ class LiveTrackingScreen extends StatefulWidget {
 
 class _LiveTrackingScreenState extends State<LiveTrackingScreen> {
   final LocationService _locationService = LocationService();
-  final SOSService _sosService = SOSService();
+  final SosService _sosService = SosService();
   final RouteService _routeService = RouteService();
 
   dynamic _mapController;
   Timer? _deadZoneTimer;
   int _deadZoneCounter = 0;
   bool _showDeadZoneWarning = false;
+  String _userId = 'user-default';
 
   @override
   void initState() {
     super.initState();
-    _locationService.startTracking(widget.tripId, _onLocationUpdate);
+    _locationService.startTracking(_userId, widget.tripId, _onLocationUpdate);
     _startDeadZoneTimer();
   }
 
@@ -74,7 +75,13 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen> {
   Future<void> _handleDeadZoneTimeout() async {
     final location = _locationService.getLastKnownPosition();
     if (location != null) {
-      await _sosService.triggerSOS(location.latitude, location.longitude);
+      await _sosService.triggerSOS(
+        userId: _userId,
+        triggerType: 'dead_zone',
+        tripId: widget.tripId,
+        lat: location.latitude,
+        lng: location.longitude,
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -87,7 +94,14 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen> {
   Future<void> _triggerSOS() async {
     final location = _locationService.getLastKnownPosition();
     if (location != null) {
-      final alertId = await _sosService.triggerSOS(location.latitude, location.longitude);
+      final response = await _sosService.triggerSOS(
+        userId: _userId,
+        triggerType: 'manual',
+        tripId: widget.tripId,
+        lat: location.latitude,
+        lng: location.longitude,
+      );
+      final alertId = response['alertId'];
       if (alertId != null && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('SOS triggered: $alertId')),

@@ -11,7 +11,7 @@ class SosScreen extends ConsumerStatefulWidget {
 }
 
 class _SosScreenState extends ConsumerState<SosScreen> {
-  final SOSService _sos = SOSService();
+  final SosService _sos = SosService();
   bool _active = false;
 
   @override
@@ -31,7 +31,12 @@ class _SosScreenState extends ConsumerState<SosScreen> {
                     if (loc == null) return;
                     setState(() => _active = true);
                     try {
-                      await _sos.triggerSOS(loc.latitude, loc.longitude);
+                      await _sos.triggerSOS(
+                        userId: 'user-default',
+                        triggerType: 'manual',
+                        lat: loc.latitude,
+                        lng: loc.longitude,
+                      );
                     } catch (e) {
                       debugPrint('SOS error: $e');
                     }
