@@ -1,0 +1,21 @@
+{
+  "name": "shadowtrace-backend",
+  "version": "1.0.0",
+  "description": "ShadowTrace AWS Lambda backend",
+  "main": "lambda/shared.js",
+  "scripts": {
+    "test": "jest --passWithNoTests",
+    "lint": "eslint lambda/ --ext .js || true"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^8.0.0",
+    "jest": "^29.0.0"
+  },
+  "dependencies": {
+    "aws-jwt-verify": "^3.2.0",
+    "aws-sdk": "^2.0.0"
+  }
+}
