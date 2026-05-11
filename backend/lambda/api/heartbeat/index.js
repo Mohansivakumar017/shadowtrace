@@ -2,11 +2,11 @@ const AWS = require('aws-sdk');
 const dynamodb = new AWS.DynamoDB.DocumentClient();
 const stepFunctions = new AWS.StepFunctions();
 
-const authUtils = require('../../shared/auth-utils');
+const { getCurrentUserId } = require('../../shared');
 
 exports.handler = async (event) => {
   try {
-    const userId = await authUtils.getCurrentUserId(event);
+    const userId = await getCurrentUserId(event);
     if (!userId) {
       return {
         statusCode: 401,

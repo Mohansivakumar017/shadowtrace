@@ -1,9 +1,9 @@
-const { dynamo, json, parseBody, currentUserId, nowIso } = require('../shared');
+const { dynamo, json, parseBody, getCurrentUserId, nowIso } = require('../shared');
 
 exports.handler = async (event) => {
   const body = parseBody(event);
   const token = body.token;
-  const userId = currentUserId(event, body);
+  const userId = await getCurrentUserId(event);
 
   if (!token) {
     return json(400, { error: 'Missing token' });

@@ -1,8 +1,8 @@
-const { dynamo, sns, json, parseBody, currentUserId, nowIso, randomId } = require('../shared');
+const { dynamo, sns, json, parseBody, getCurrentUserId, nowIso, randomId } = require('../shared');
 
 exports.handler = async (event) => {
   const body = parseBody(event);
-  const userId = currentUserId(event, body);
+  const userId = await getCurrentUserId(event);
   const incidentId = body.incidentId || randomId('incident');
 
   const incident = {

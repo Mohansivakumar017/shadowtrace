@@ -1,7 +1,7 @@
-const { dynamo, json, currentUserId } = require('../../shared');
+const { dynamo, json, getCurrentUserId } = require('../../shared');
 
 exports.handler = async (event) => {
-  const userId = currentUserId(event);
+  const userId = await getCurrentUserId(event);
 
   try {
     const result = await dynamo.query({

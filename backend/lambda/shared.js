@@ -5,6 +5,7 @@ const { CognitoJwtVerifier } = require('aws-jwt-verify');
 const dynamo = new AWS.DynamoDB.DocumentClient({ convertEmptyValues: true });
 const sns = new AWS.SNS();
 const stepFunctions = new AWS.StepFunctions();
+const cognito = new AWS.CognitoIdentityServiceProvider();
 
 const COGNITO_USER_POOL_ID = process.env.COGNITO_USER_POOL_ID;
 const COGNITO_CLIENT_ID = process.env.COGNITO_CLIENT_ID;
@@ -114,6 +115,7 @@ module.exports = {
   dynamo,
   sns,
   stepFunctions,
+  cognito,
   json,
   parseBody,
   getCurrentUserId,
