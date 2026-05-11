@@ -64,3 +64,4 @@ sam-tests/
 .aws-sam/
 sam-deploy.json
 
+.env
