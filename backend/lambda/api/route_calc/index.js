@@ -52,6 +52,73 @@ async function getWeather(lat, lng) {
   }
 }
 
+async function getTrafficFlow(lat, lng) {
+  const hereKey = process.env.HERE_API_KEY;
+  if (!hereKey) return { trafficSpeed: null, congestionLevel: 'unknown', safetyScore: 85 };
+
+  try {
+    const response = await makeHttpsRequest({
+      hostname: 'traffic.ls.hereapi.com',
+      path: `/traffic/6.1/flow.json?apikey=${hereKey}&prox=${lat},${lng},500&responseAttributes=sh,fc`,
+      method: 'GET',
+    });
+
+    if (response.body.RWS && response.body.RWS[0]) {
+      const flowData = response.body.RWS[0];
+      const currentFlow = flowData.currentFlow;
+      if (!currentFlow) return { trafficSpeed: null, congestionLevel: 'unknown', safetyScore: 85 };
+
+      const speed = currentFlow[0]?.SP[0]?.SP || null;
+      const flow = currentFlow[0]?.FIS[0]?.FI[0] || {};
+      const speedLimit = flow.SL || 50;
+      const trafficSpeed = speed ? Math.round(speed) : null;
+
+      let congestionLevel = 'light';
+      let safetyScore = 85;
+
+      if (trafficSpeed && speedLimit) {
+        const speedRatio = trafficSpeed / speedLimit;
+        if (speedRatio < 0.3) {
+          congestionLevel = 'severe';
+          safetyScore = 45;
+        } else if (speedRatio < 0.5) {
+          congestionLevel = 'moderate';
+          safetyScore = 65;
+        } else if (speedRatio < 0.8) {
+          congestionLevel = 'light';
+          safetyScore = 80;
+        } else {
+          congestionLevel = 'free-flow';
+          safetyScore = 90;
+        }
+      }
+
+      return { trafficSpeed, congestionLevel, safetyScore, speedLimit };
+    }
+
+    return { trafficSpeed: null, congestionLevel: 'unknown', safetyScore: 85 };
+  } catch (error) {
+    console.warn('Traffic data fetch failed:', error.message);
+    return { trafficSpeed: null, congestionLevel: 'unknown', safetyScore: 85 };
+  }
+}
+
+function calculateRouteSafetyScore(weatherHazard, trafficScore, routeLength) {
+  let score = 100;
+
+  if (weatherHazard) {
+    score -= 25;
+  }
+
+  score = Math.min(score, trafficScore);
+
+  if (routeLength > 50) {
+    score -= Math.min(10, (routeLength - 50) / 10);
+  }
+
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+
 function createBufferPolygon(linestring, bufferMeters) {
   if (!linestring || linestring.length < 2) return [];
 
@@ -100,14 +167,25 @@ exports.handler = async (event) => {
     const leg = routeResult.Legs[0];
     const linestring = leg.Geometry.LineString;
     const eta = leg.Duration || 0;
+    const distance = (leg.Distance || 0) / 1000;
 
     const midIndex = Math.floor(linestring.length / 2);
     const midpoint = linestring[midIndex];
-    const weather = await getWeather(midpoint[1], midpoint[0]);
+
+    const [weatherData, trafficData] = await Promise.all([
+      getWeather(midpoint[1], midpoint[0]),
+      getTrafficFlow(midpoint[1], midpoint[0]),
+    ]);
+
+    const routeSafetyScore = calculateRouteSafetyScore(
+      weatherData.hazard,
+      trafficData.safetyScore,
+      distance
+    );
 
     const bufferPolygon = createBufferPolygon(linestring, 200);
-
     const geofenceId = randomId('geofence');
+
     await location.putGeofence({
       CollectionName: 'shadowtrace-routes',
       GeofenceId: geofenceId,
@@ -132,8 +210,12 @@ exports.handler = async (event) => {
       destLng,
       polyline: linestring,
       eta,
-      hazardFlag: weather.hazard,
-      weather: weather.main,
+      distance,
+      hazardFlag: weatherData.hazard,
+      weather: weatherData.main,
+      trafficCongestion: trafficData.congestionLevel,
+      trafficSpeed: trafficData.trafficSpeed,
+      routeSafetyScore,
       geofenceId,
       status: 'ACTIVE',
       createdAt: new Date().toISOString(),
@@ -148,8 +230,16 @@ exports.handler = async (event) => {
       tripId,
       polyline: linestring,
       eta,
-      hazardFlag: weather.hazard,
-      weather: weather.main,
+      distance,
+      hazardFlag: weatherData.hazard,
+      weather: weatherData.main,
+      traffic: {
+        congestion: trafficData.congestionLevel,
+        currentSpeed: trafficData.trafficSpeed,
+        speedLimit: trafficData.speedLimit,
+      },
+      routeSafetyScore,
+      recommendations: generateRecommendations(routeSafetyScore, trafficData.congestionLevel, weatherData.hazard),
     });
   } catch (error) {
     if (error.message.startsWith('401|')) {
@@ -161,3 +251,29 @@ exports.handler = async (event) => {
     return json(500, { error: error.message || 'Route calculation failed' });
   }
 };
+
+function generateRecommendations(safetyScore, trafficLevel, weatherHazard) {
+  const recommendations = [];
+
+  if (safetyScore < 50) {
+    recommendations.push('Route has high hazard - consider alternative routes or delay travel');
+  } else if (safetyScore < 75) {
+    recommendations.push('Route has moderate hazard - exercise caution');
+  }
+
+  if (trafficLevel === 'severe') {
+    recommendations.push('Heavy traffic detected - expect significant delays');
+  } else if (trafficLevel === 'moderate') {
+    recommendations.push('Moderate traffic on this route');
+  }
+
+  if (weatherHazard) {
+    recommendations.push('Hazardous weather detected - stay alert');
+  }
+
+  if (recommendations.length === 0) {
+    recommendations.push('Route is safe - proceed normally');
+  }
+
+  return recommendations;
+}

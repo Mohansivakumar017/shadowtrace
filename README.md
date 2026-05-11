@@ -1,8 +1,8 @@
-# ShadowTrace AI
+# ShadowTrace
 
-**Intelligent Travel Monitoring & Smart Emergency Assistant**
+**Real-Time Travel Safety Monitoring & Emergency Response Platform**
 
-ShadowTrace AI is a personal safety platform that combines real-time GPS tracking, AI-based safe route analysis, automated emergency detection, and AWS cloud infrastructure into a unified mobile app for travelers, students, employees, and families.
+ShadowTrace is a personal safety platform that combines real-time GPS tracking, traffic-aware route analysis, automated emergency detection, and AWS cloud infrastructure into a unified mobile app for travelers, students, employees, and families.
 
 [![AWS](https://img.shields.io/badge/Cloud-AWS-orange)](https://aws.amazon.com)
 [![Flutter](https://img.shields.io/badge/Frontend-Flutter-blue)](https://flutter.dev)
@@ -19,9 +19,9 @@ In today's world, personal safety during travel has become a critical concern. P
 
 ## Proposed Solution
 
-ShadowTrace AI merges two safety frameworks into one cloud-native mobile platform:
+ShadowTrace merges two safety frameworks into one cloud-native mobile platform:
 
-**Case 1 — Smart Travel Monitoring:** Continuous GPS telemetry streamed to AWS, AI-based route selection evaluating weather/traffic/network, geofence corridor detection for route deviation, and automated dead-zone failsafe alerts.
+**Case 1 — Real-Time Travel Monitoring:** Continuous GPS telemetry streamed to AWS, traffic and weather-aware route selection, geofence corridor detection for route deviation, and automated dead-zone failsafe alerts.
 
 **Case 2 — Emergency Detection & Remote Monitoring:** Hands-free voice SOS, silent SOS via power-button sequence, trusted-contact live location view, and automated SNS escalation — all without requiring physical phone interaction.
 
@@ -105,13 +105,14 @@ Spatial Layer — Amazon Location Service (replaces PostGIS):
 - Background tracking via Android foreground service (`SafetyForegroundService.kt`)
 - Real-time sync latency under 2 seconds via API Gateway WebSocket / Firebase fallback
 
-### AI/ML-Based Safe Route Selection
+### Traffic-Aware Route Selection
 - Route calculation via ALS `CalculateRoute` (TravelMode: Walking/Driving)
+- Real-time traffic data integration via HERE Maps Traffic API
 - Weather hazard detection via OpenWeatherMap API at route midpoint
-- Dynamic rerouting on hazard flag (Thunderstorm, Snow, Tornado)
-- Route safety score calculated from historical location data in `shadowtrace-locations`
-- Dead-zone segment prediction and pre-entry warning notification
-- ETA computed from ALS `TravelTime` field, updated dynamically
+- Traffic congestion level and speed assessment from HERE Flow API
+- Dynamic route safety scoring based on traffic, weather, and distance
+- Automated recommendations for route alternatives on high-hazard conditions
+- ETA computed from ALS `TravelTime` field, updated dynamically with traffic data
 
 ### Dead-Zone Failsafe
 - Step Functions state machine starts on every trip
@@ -184,18 +185,17 @@ shadowtrace/
 │   │   ├── location_service.dart      # Streams GPS → POST /location
 │   │   ├── sos_service.dart           # POST /sos, voice SOS, cancel
 │   │   ├── route_service.dart         # startTrip, endTrip, getDevicePosition
+│   │   ├── traffic_service.dart       # Real-time traffic data integration
 │   │   ├── auth_service.dart          # Cognito sign-in/sign-up/JWT
 │   │   └── offline_map_cache.dart     # ALS GetStaticMap → SQLite tiles
 │   └── widgets/
 │       ├── dead_zone_countdown.dart   # 300s countdown with cancel
 │       └── silent_sos_detector.dart   # Power-button ×5 detector
-├── app/src/main/java/com/shadowtrace/safeassist/   # Android Kotlin
-│   ├── MainActivity.kt
-│   ├── SafetyForegroundService.kt
-│   ├── StallDetector.kt
-│   ├── DeadZoneTimerService.kt
-│   ├── SilentSosDetector.kt
-│   └── AlertDispatcher.kt
+├── android/                           # Flutter Android bridge
+│   └── app/
+│       ├── src/main/AndroidManifest.xml
+│       ├── build.gradle
+│       └── google-services.json
 ├── backend/
 │   ├── lambda/
 │   │   ├── shared.js                  # JWT validation, input sanitization, AWS clients
@@ -203,7 +203,7 @@ shadowtrace/
 │   │       ├── sos/index.js
 │   │       ├── update_live_location/index.js
 │   │       ├── dead_zone_timer/index.js
-│   │       ├── route_calc/index.js
+│   │       ├── route_calc/index.js       # Traffic-aware routing with HERE Maps
 │   │       ├── alert_dispatch/index.js
 │   │       ├── register_device_token/index.js
 │   │       └── safety_score/index.js
