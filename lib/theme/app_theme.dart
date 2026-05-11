@@ -22,7 +22,8 @@ class AppTheme {
         surface: surfaceDark,
         onSurface: Colors.white,
       ),
-      textTheme: GoogleFonts.orbitronTextTheme(ThemeData.dark().textTheme).copyWith(
+      textTheme: GoogleFonts.orbitronTextTheme(ThemeData.dark().textTheme)
+          .copyWith(
         displayLarge: GoogleFonts.orbitron(
           color: primaryNeonBlue,
           fontWeight: FontWeight.bold,
@@ -35,7 +36,9 @@ class AppTheme {
       ),
       cardTheme: CardTheme(
         color: surfaceDark.withOpacity(0.8),
-        shape: RoundedCornerShape(16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
         elevation: 8,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -43,14 +46,12 @@ class AppTheme {
           backgroundColor: primaryNeonBlue,
           foregroundColor: backgroundDark,
           textStyle: GoogleFonts.orbitron(fontWeight: FontWeight.bold),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       ),
     );
   }
 }
 
-class RoundedCornerShape extends RoundedRectangleBorder {
-  const RoundedCornerShape(double radius)
-      : super(borderRadius: const BorderRadius.all(Radius.circular(16)));
-}

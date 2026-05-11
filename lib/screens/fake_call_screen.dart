@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 
 class FakeCallScreen extends StatefulWidget {
@@ -10,10 +11,27 @@ class FakeCallScreen extends StatefulWidget {
 }
 
 class _FakeCallScreenState extends State<FakeCallScreen> {
-  final AudioPlayer _player = AudioPlayer();
+  late AudioPlayer _player;
   bool _ringing = false;
 
+  @override
+  void initState() {
+    super.initState();
+    if (!kIsWeb) {
+      _player = AudioPlayer();
+    }
+  }
+
+  @override
+  void dispose() {
+    if (!kIsWeb) {
+      _player.dispose();
+    }
+    super.dispose();
+  }
+
   Future<void> _startCall() async {
+    if (kIsWeb) return;
     setState(() => _ringing = true);
     try {
       await _player.setAsset('assets/sounds/ringtone.mp3');
@@ -23,12 +41,22 @@ class _FakeCallScreenState extends State<FakeCallScreen> {
   }
 
   Future<void> _stopCall() async {
+    if (kIsWeb) return;
     await _player.stop();
     setState(() => _ringing = false);
   }
 
   @override
   Widget build(BuildContext context) {
+    if (kIsWeb) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Fake Call')),
+        body: const Center(
+          child: Text('Fake call feature is not available on web platform'),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(title: const Text('Fake Call')),
       body: Center(

@@ -1,112 +1,139 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:amplify_flutter/amplify_flutter.dart';
 import '../config/app_config.dart';
+import 'location_service.dart';
 
-class SOSService {
-  static final SOSService _instance = SOSService._internal();
+class SosService {
+  static final SosService _instance = SosService._internal();
+  final LocationService _locationService = LocationService();
 
-  factory SOSService() {
+  factory SosService() {
     return _instance;
   }
 
-  SOSService._internal();
+  SosService._internal();
 
-  Future<String?> triggerSOS(double lat, double lng) async {
+  Future<Map<String, dynamic>> triggerSOS({
+    required String userId,
+    required String triggerType,
+    String? tripId,
+    double? lat,
+    double? lng,
+  }) async {
     try {
-      final session = await Amplify.Auth.getSession();
-      if (!session.isSignedIn) {
-        throw Exception('User not authenticated');
+      double finalLat = lat ?? _locationService.getLastKnownPosition()?.latitude ?? 0.0;
+      double finalLng = lng ?? _locationService.getLastKnownPosition()?.longitude ?? 0.0;
+
+      if (finalLat == 0.0) {
+        final pos = await Geolocator.getCurrentPosition();
+        finalLat = pos.latitude;
+        finalLng = pos.longitude;
       }
 
-      final idToken = session.userPoolTokens!.idToken.toString();
+      final session = await Amplify.Auth.fetchAuthSession();
+      if (!session.isSignedIn) {
+        return {'error': 'User not authenticated', 'status': 401};
+      }
+
+      final idToken = _getTokenString(session);
 
       final response = await http.post(
-        Uri.parse('${AppConfig.apiBaseUrl}/sos'),
+        Uri.parse(AppConfig.triggerAlertEndpoint),
         headers: {
           'Authorization': 'Bearer $idToken',
           'Content-Type': 'application/json',
         },
         body: jsonEncode({
-          'lat': lat,
-          'lng': lng,
+          'userId': userId,
+          'tripId': tripId,
+          'lat': finalLat,
+          'lng': finalLng,
+          'triggerType': triggerType,
+          'timestamp': DateTime.now().toIso8601String(),
         }),
       );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return data['alertId'] as String?;
-      } else {
-        throw Exception('SOS trigger failed: ${response.statusCode}');
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
       }
+      return {'error': 'SOS trigger failed', 'status': response.statusCode};
     } catch (e) {
-      print('SOS error: $e');
-      return null;
+      debugPrint('SOS error: $e');
+      return {'error': e.toString()};
     }
   }
 
-  Future<void> triggerVoiceSOS() async {
-    try {
-      final location = await _getCurrentLocation();
-      if (location != null) {
-        await triggerSOS(location['lat'] as double, location['lng'] as double);
-      }
-    } catch (e) {
-      print('Voice SOS error: $e');
-    }
+  Future<Map<String, dynamic>> triggerVoiceSOS(
+    String userId, {
+    String? tripId,
+    double? lat,
+    double? lng,
+  }) {
+    return triggerSOS(
+      userId: userId,
+      triggerType: 'voice',
+      tripId: tripId,
+      lat: lat,
+      lng: lng,
+    );
   }
 
-  Future<bool> cancelAlert(String alertId) async {
+  Future<Map<String, dynamic>> triggerSilentSOS(
+    String userId, {
+    String? tripId,
+    double? lat,
+    double? lng,
+  }) {
+    return triggerSOS(
+      userId: userId,
+      triggerType: 'silent',
+      tripId: tripId,
+      lat: lat,
+      lng: lng,
+    );
+  }
+
+  Future<bool> respondToAlert({
+    required String alertId,
+    required String responderId,
+    required String response,
+  }) async {
     try {
-      final session = await Amplify.Auth.getSession();
+      final session = await Amplify.Auth.fetchAuthSession();
       if (!session.isSignedIn) {
-        throw Exception('User not authenticated');
+        return false;
       }
 
-      final idToken = session.userPoolTokens!.idToken.toString();
-
-      final response = await http.post(
-        Uri.parse('${AppConfig.apiBaseUrl}/sos/cancel'),
+      final idToken = _getTokenString(session);
+      final res = await http.post(
+        Uri.parse(AppConfig.respondAlertEndpoint),
         headers: {
           'Authorization': 'Bearer $idToken',
           'Content-Type': 'application/json',
         },
-        body: jsonEncode({'alertId': alertId}),
+        body: jsonEncode({
+          'alertId': alertId,
+          'responderId': responderId,
+          'response': response,
+          'timestamp': DateTime.now().toIso8601String(),
+        }),
       );
-
-      return response.statusCode == 200;
+      return res.statusCode == 200;
     } catch (e) {
-      print('Cancel alert error: $e');
+      debugPrint('respondToAlert error: $e');
       return false;
     }
   }
 
-  Future<Map<String, dynamic>?> _getCurrentLocation() async {
+  String _getTokenString(dynamic session) {
     try {
-      final session = await Amplify.Auth.getSession();
-      if (!session.isSignedIn) {
-        return null;
-      }
-
-      final idToken = session.userPoolTokens!.idToken.toString();
-      final response = await http.get(
-        Uri.parse('${AppConfig.apiBaseUrl}/device-position'),
-        headers: {
-          'Authorization': 'Bearer $idToken',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return {
-          'lat': data['lat'],
-          'lng': data['lng'],
-        };
-      }
-      return null;
-    } catch (e) {
-      print('Get location error: $e');
-      return null;
+      return (session as dynamic).amplifyUserPoolTokens?.idToken?.toString() ??
+          "";
+    } catch (_) {
+      return "";
     }
   }
 }

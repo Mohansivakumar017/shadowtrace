@@ -8,7 +8,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final allTiles = <({String title, IconData icon, String route})>[
-      (title: 'Live Tracking', icon: Icons.map, route: '/live'),
+      (title: 'Live Tracking', icon: Icons.map, route: '/live/default-trip'),
       (title: 'SOS', icon: Icons.sos, route: '/sos'),
       (title: 'Notifications', icon: Icons.notifications, route: '/notifications'),
       (title: 'AI Assistant', icon: Icons.smart_toy, route: '/assistant'),
@@ -33,7 +33,7 @@ class HomeScreen extends StatelessWidget {
         builder: (context, snapshot) {
           final isGuest = snapshot.data == true;
           final tiles = isGuest
-              ? allTiles.where((tile) => tile.route == '/live' || tile.route == '/sos' || tile.route == '/notifications').toList()
+              ? allTiles.where((tile) => tile.route == '/live/default-trip' || tile.route == '/sos' || tile.route == '/notifications').toList()
               : allTiles;
 
           return CustomScrollView(
@@ -80,7 +80,7 @@ class HomeScreen extends StatelessWidget {
                             const SizedBox(width: 12),
                             Expanded(
                               child: FilledButton.tonalIcon(
-                                onPressed: () => context.go('/live'),
+                                onPressed: () => context.go('/live/default-trip'),
                                 icon: const Icon(Icons.map),
                                 label: const Text('Track'),
                               ),

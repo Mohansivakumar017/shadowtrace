@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import '../services/auth_service.dart';
 
@@ -21,6 +22,11 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _routeNext() async {
     await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
+
+    if (kIsWeb) {
+      context.go('/home');
+      return;
+    }
 
     final hasSession = await _authService.hasActiveSession();
     if (hasSession) {

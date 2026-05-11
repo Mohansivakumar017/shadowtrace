@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:shadowtrace_app/theme/app_theme.dart';
+import '../../theme/app_theme.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
 

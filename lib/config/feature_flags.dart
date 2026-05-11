@@ -1,13 +1,16 @@
 class FeatureFlags {
-  // Requires SNS push notifications configured
-  static const bool SILENT_SOS_ENABLED = false;
+  // Silent SOS — power button ×5 sequence
+  static const bool SILENT_SOS_ENABLED = true;
 
-  // Requires Location Service GetStaticMap and local SQLite caching
-  static const bool OFFLINE_MAP_CACHE = false;
+  // Offline map caching for dead zones
+  static const bool OFFLINE_MAP_CACHE = true;
 
-  // Requires device vibration capability and hardware_buttons package
+  // Pre-alert vibration warning at 60s before dead-zone alert
   static const bool PRE_ALERT_VIBRATION = true;
 
-  // Requires Location Service SearchPlaceIndexForPosition
+  // Aggregated route safety scores
   static const bool SAFETY_SCORES_ENABLED = true;
+
+  // Remote audio monitoring during SOS
+  static const bool AUDIO_MONITORING = true;
 }

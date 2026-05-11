@@ -9,3 +9,58 @@ build
 
 *.hprof
 *.hprof
+
+# ─── Flutter ────────────────────────────────────────────
+.dart_tool/
+.flutter-plugins-dependencies
+.packages
+pubspec.lock
+coverage/
+
+# ─── IDE ─────────────────────────────────────────────────
+.vscode/
+.idea/
+*.iml
+*.iws
+*.ipr
+.classpath
+.project
+
+# ─── Firebase & Credentials (SECURITY) ──────────────────
+# Never commit real API keys or credentials
+app/google-services.json
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+.env
+.env.local
+*.pem
+aws-exports.js
+amplifyconfiguration.dart
+amplifyconfiguration.json
+
+# ─── OS ────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# ─── Temporary ────────────────────────────────────────
+*.tmp
+*.bak
+*.log
+node_modules/
+dist/
+.cache/
+
+# ─── Build Artifacts ──────────────────────────────────
+/android/app/debug/
+/android/app/release/
+/build/
+/ios/Flutter/Flutter.framework/
+/ios/Flutter/Flutter.podspec
+
+# ─── AWS ──────────────────────────────────────────────
+sam-tests/
+.aws-sam/
+sam-deploy.json
+

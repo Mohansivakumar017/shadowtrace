@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import '../services/openai_service.dart';
 
@@ -15,14 +15,17 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
   final List<Map<String, String>> _messages = [
     {'role': 'system', 'content': 'You are ShadowTrace AI assistant. Provide concise, safety-focused advice.'},
   ];
-  final FlutterTts _tts = FlutterTts();
+  late final FlutterTts _tts;
   late final OpenAiService _openAi;
   bool _loading = false;
 
   @override
   void initState() {
     super.initState();
-    _openAi = OpenAiService(apiKey: dotenv.env['OPENAI_API_KEY'] ?? '');
+    if (!kIsWeb) {
+      _tts = FlutterTts();
+    }
+    _openAi = OpenAiService();
   }
 
   Future<void> _send() async {
@@ -36,7 +39,9 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
     try {
       final reply = await _openAi.sendMessage(_messages);
       setState(() => _messages.add({'role': 'assistant', 'content': reply}));
-      await _tts.speak(reply);
+      if (!kIsWeb) {
+        await _tts.speak(reply);
+      }
     } catch (e) {
       setState(() => _messages.add({'role': 'assistant', 'content': 'AI service error: $e'}));
     } finally {

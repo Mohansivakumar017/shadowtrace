@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:vibration/vibration.dart';
-import 'package:shadowtrace_app/models/alert_model.dart';
-import 'package:shadowtrace_app/services/alert_service.dart';
-import 'package:shadowtrace_app/services/sound_service.dart';
+import '../models/alert_model.dart';
+import '../services/alert_service.dart';
+import '../services/sound_service.dart';
 
 class AlertProvider with ChangeNotifier {
   final AlertService _alertService = AlertService();
@@ -34,11 +35,10 @@ class AlertProvider with ChangeNotifier {
 
     try {
       // 2. Immediate Haptic & Sound Feedback
-      if (await Vibration.hasVibrator() ?? false) {
+      if (!kIsWeb && await Vibration.hasVibrator() ?? false) {
         Vibration.vibrate(pattern: [500, 200, 500, 200], intensities: [255, 255]);
       }
 
-      // TRIGGER EXISTING SOUND
       _soundService.playEmergencySiren();
 
       // 3. API Call
@@ -78,11 +78,14 @@ class AlertProvider with ChangeNotifier {
     );
 
     if (responseType == "SAFE_NOW") {
-      _soundService.stopSiren();
+      _activeAlertId = null;
+      _soundService.stopEmergencySiren();
     }
 
     _isLoading = false;
     notifyListeners();
+
     return result;
   }
 }
+

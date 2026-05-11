@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:amplify_flutter/amplify_flutter.dart';
 import '../config/app_config.dart';
@@ -19,12 +20,12 @@ class RouteService {
     double destLng,
   ) async {
     try {
-      final session = await Amplify.Auth.getSession();
+      final session = await Amplify.Auth.fetchAuthSession();
       if (!session.isSignedIn) {
         throw Exception('User not authenticated');
       }
 
-      final idToken = session.userPoolTokens!.idToken.toString();
+      final idToken = _getTokenString(session);
 
       final response = await http.post(
         Uri.parse('${AppConfig.apiBaseUrl}/route'),
@@ -46,19 +47,19 @@ class RouteService {
         throw Exception('Route calculation failed: ${response.statusCode}');
       }
     } catch (e) {
-      print('Route calculation error: $e');
+      debugPrint('Route calculation error: $e');
       return null;
     }
   }
 
   Future<bool> endTrip(String tripId) async {
     try {
-      final session = await Amplify.Auth.getSession();
+      final session = await Amplify.Auth.fetchAuthSession();
       if (!session.isSignedIn) {
         throw Exception('User not authenticated');
       }
 
-      final idToken = session.userPoolTokens!.idToken.toString();
+      final idToken = _getTokenString(session);
 
       final response = await http.post(
         Uri.parse('${AppConfig.apiBaseUrl}/trip/end'),
@@ -71,19 +72,19 @@ class RouteService {
 
       return response.statusCode == 200;
     } catch (e) {
-      print('End trip error: $e');
+      debugPrint('End trip error: $e');
       return false;
     }
   }
 
   Future<Map<String, dynamic>?> getDevicePosition(String userId) async {
     try {
-      final session = await Amplify.Auth.getSession();
+      final session = await Amplify.Auth.fetchAuthSession();
       if (!session.isSignedIn) {
         throw Exception('User not authenticated');
       }
 
-      final idToken = session.userPoolTokens!.idToken.toString();
+      final idToken = _getTokenString(session);
 
       final response = await http.get(
         Uri.parse('${AppConfig.apiBaseUrl}/device-position/$userId'),
@@ -97,8 +98,16 @@ class RouteService {
       }
       return null;
     } catch (e) {
-      print('Get device position error: $e');
+      debugPrint('Get device position error: $e');
       return null;
+    }
+  }
+
+  String _getTokenString(dynamic session) {
+    try {
+      return (session as dynamic).amplifyUserPoolTokens?.idToken?.toString() ?? "";
+    } catch (_) {
+      return "";
     }
   }
 }

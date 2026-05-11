@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:glassmorphism/glassmorphism.dart';
 import 'package:provider/provider.dart';
-import 'package:shadowtrace_app/providers/alert_provider.dart';
-import 'package:shadowtrace_app/theme/app_theme.dart';
-import 'package:shadowtrace_app/widgets/loading_overlay.dart';
+import '../providers/alert_provider.dart';
+import '../theme/app_theme.dart';
+import '../widgets/loading_overlay.dart';
 
 class GuardianAlertScreen extends StatelessWidget {
   const GuardianAlertScreen({super.key});

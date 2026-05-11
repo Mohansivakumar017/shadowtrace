@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:maplibre_gl/maplibre_gl.dart';
+import 'package:flutter/foundation.dart';
+import 'package:maplibre_gl/maplibre_gl.dart' if (dart.library.html) 'dart:async' as maplibre;
 import '../services/location_service.dart';
 import '../services/route_service.dart';
 import '../services/sos_service.dart';
@@ -28,7 +29,7 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen> {
   final SOSService _sosService = SOSService();
   final RouteService _routeService = RouteService();
 
-  MaplibreMapController? _mapController;
+  dynamic _mapController;
   Timer? _deadZoneTimer;
   int _deadZoneCounter = 0;
   bool _showDeadZoneWarning = false;
@@ -95,8 +96,43 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen> {
     }
   }
 
+  Widget _buildMap() {
+    if (kIsWeb) return const SizedBox.shrink();
+    // This will only be called on native platforms
+    // Intentionally not using maplibre types to avoid web compilation errors
+    return SizedBox.expand(
+      child: Container(
+        color: Colors.grey[900],
+        child: const Center(child: Text('Loading map...')),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (kIsWeb) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Live Tracking'),
+          elevation: 0,
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text('Live map tracking is not available on web'),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _triggerSOS,
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                child: const Text('Trigger SOS'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Live Tracking'),
@@ -104,11 +140,10 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen> {
       ),
       body: Stack(
         children: [
-          MaplibreMap(
-            styleString: AppConfig.alsMapStyle,
-            onMapCreated: (controller) => _mapController = controller,
-            initialCameraPosition: const CameraPosition(target: LatLng(28.6139, 77.2090), zoom: 14),
-          ),
+          if (!kIsWeb)
+            _buildMap()
+          else
+            const Center(child: Text('Maps not available on web')),
           if (widget.hazardFlag)
             Positioned(
               top: 16,

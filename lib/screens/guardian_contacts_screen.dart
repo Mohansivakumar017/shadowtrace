@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import '../services/route_service.dart';
 
-class TrustedContactsScreen extends StatefulWidget {
-  const TrustedContactsScreen({Key? key}) : super(key: key);
+class GuardianContactsScreen extends StatefulWidget {
+  const GuardianContactsScreen({Key? key}) : super(key: key);
 
   @override
-  State<TrustedContactsScreen> createState() => _TrustedContactsScreenState();
+  State<GuardianContactsScreen> createState() => _GuardianContactsScreenState();
 }
 
-class _TrustedContactsScreenState extends State<TrustedContactsScreen> {
+class _GuardianContactsScreenState extends State<GuardianContactsScreen> {
   final RouteService _routeService = RouteService();
   final List<Map<String, String>> _contacts = [];
   bool _isLoading = true;

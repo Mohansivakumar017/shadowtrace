@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:vibration/vibration.dart';
 import 'dart:async';
 import '../config/feature_flags.dart';
@@ -38,7 +39,7 @@ class _DeadZoneCountdownState extends State<DeadZoneCountdown> {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() => _remainingSeconds--);
 
-      if (_remainingSeconds == 60 && FeatureFlags.PRE_ALERT_VIBRATION) {
+      if (_remainingSeconds == 60 && !kIsWeb && FeatureFlags.PRE_ALERT_VIBRATION) {
         Vibration.vibrate(duration: 500);
       }
 

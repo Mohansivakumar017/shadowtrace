@@ -1,8 +1,8 @@
 import 'package:go_router/go_router.dart';
-import 'package:shadowtrace_app/screens/sos_screen.dart';
-import 'package:shadowtrace_app/screens/guardian_alert_screen.dart';
-import 'package:shadowtrace_app/screens/maps/live_tracking_screen.dart';
-import 'package:shadowtrace_app/screens/splash_screen.dart';
+import '../screens/sos_screen.dart';
+import '../screens/guardian_alert_screen.dart';
+import '../screens/maps/live_tracking_screen.dart';
+import '../screens/splash_screen.dart';
 
 final router = GoRouter(
   initialLocation: '/',
@@ -13,7 +13,7 @@ final router = GoRouter(
     ),
     GoRoute(
       path: '/sos',
-      builder: (context, state) => const SOSScreen(),
+      builder: (context, state) => const SosScreen(),
     ),
     GoRoute(
       path: '/guardian',
@@ -25,3 +25,4 @@ final router = GoRouter(
     ),
   ],
 );
+
