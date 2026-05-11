@@ -1,49 +1,58 @@
-class AppConfig {
-  // API 1 — Location & Weather
-  static const String locationApiBase =
-      'https://bt0afo9upa.execute-api.us-east-1.amazonaws.com/dev';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-  // API 2 — Alert System
-  static const String alertApiBase =
-      'https://ycr7hmmo89.execute-api.us-east-1.amazonaws.com/dev';
+class AppConfig {
+  // API Endpoints from environment
+  static String get apiBaseUrl =>
+      dotenv.env['AWS_API_GATEWAY_URL'] ??
+      dotenv.env['API_BASE_URL'] ??
+      'https://api.shadowtrace.local/dev';
+
+  static String get locationApiBase => apiBaseUrl;
+  static String get alertApiBase => apiBaseUrl;
 
   // Individual endpoints
-  static const String locationEndpoint = '$locationApiBase/location';
-  static const String weatherDataEndpoint =
-      '$locationApiBase/wheatherdataget';
-  static const String weatherForecastEndpoint =
-      '$locationApiBase/wheatherforecasting';
-  static const String triggerAlertEndpoint = '$alertApiBase/trigger-alert';
-  static const String respondAlertEndpoint = '$alertApiBase/respond-alert';
-  static const String audioStreamEndpoint = '$alertApiBase/audio-stream';
-  static const String heartbeatEndpoint = '$alertApiBase/heartbeat';
-  static const String safetyScoreEndpoint = '$alertApiBase/safety-score';
-  static const String contactsEndpoint = '$alertApiBase/contacts';
+  static String get locationEndpoint => '$apiBaseUrl/location';
+  static String get weatherDataEndpoint => '$apiBaseUrl/weather';
+  static String get weatherForecastEndpoint => '$apiBaseUrl/forecast';
+  static String get triggerAlertEndpoint => '$apiBaseUrl/sos';
+  static String get respondAlertEndpoint => '$apiBaseUrl/respond-alert';
+  static String get audioStreamEndpoint => '$apiBaseUrl/audio-stream';
+  static String get heartbeatEndpoint => '$apiBaseUrl/heartbeat';
+  static String get safetyScoreEndpoint => '$apiBaseUrl/safety-score';
+  static String get contactsEndpoint => '$apiBaseUrl/contacts';
+  static String get routeEndpoint => '$apiBaseUrl/route_calc';
+  static String get tripEndpoint => '$apiBaseUrl/trip';
+  static String get devicePositionEndpoint => '$apiBaseUrl/device-position';
 
-  // Additional endpoints (same base as location API)
-  static const String routeEndpoint = '$locationApiBase/route';
-  static const String tripEndpoint = '$locationApiBase/trip';
-  static const String devicePositionEndpoint = '$locationApiBase/device-position';
+  // AWS Configuration
+  static String get awsRegion => dotenv.env['AWS_REGION'] ?? 'us-east-1';
+  static String get alsTrackerName =>
+      dotenv.env['ALS_TRACKER_NAME'] ?? 'shadowtrace-tracker';
+  static String get alsRouteCalcName =>
+      dotenv.env['ALS_ROUTE_CALC_NAME'] ?? 'shadowtrace-route-calc';
+  static String get alsGeofenceCollection =>
+      dotenv.env['ALS_GEOFENCE_COLLECTION'] ?? 'shadowtrace-routes';
+  static String get alsPlaceIndex =>
+      dotenv.env['ALS_PLACE_INDEX'] ?? 'shadowtrace-place-index';
 
-  // AWS config
-  static const String awsRegion = 'us-east-1';
-  static const String alsTrackerName = 'shadowtrace-tracker';
-  static const String alsRouteCalcName = 'shadowtrace-route-calc';
-  static const String alsGeofenceCollection = 'shadowtrace-routes';
-  static const String alsPlaceIndex = 'shadowtrace-place-index';
+  // Configuration from environment with defaults
+  static int get deadZoneThresholdSeconds =>
+      int.tryParse(dotenv.env['DEAD_ZONE_THRESHOLD_SECONDS'] ?? '300') ?? 300;
+  static int get preAlertWarnningSeconds => 60;
+  static int get stallRadiusMeters => 25;
+  static int get locationPollIntervalSeconds =>
+      int.tryParse(dotenv.env['LOCATION_POLL_INTERVAL_SECONDS'] ?? '10') ?? 10;
+  static int get audioChunkUploadIntervalSeconds => 30;
 
-  // Dead-zone timer configuration
-  static const int deadZoneThresholdSeconds = 300;
-  static const int preAlertWarnningSeconds = 60;
-  static const int stallRadiusMeters = 25;
-  static const int locationPollIntervalSeconds = 10;
+  // Cognito Configuration
+  static String get userPoolId =>
+      dotenv.env['COGNITO_USER_POOL_ID'] ?? 'us-east-1_XXXXXXXXX';
+  static String get clientId =>
+      dotenv.env['COGNITO_CLIENT_ID'] ?? 'xxxxxxxxxxxxxxxxxxxxxxxxxx';
+  static String get identityPoolId =>
+      dotenv.env['COGNITO_IDENTITY_POOL_ID'] ?? 'us-east-1:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx';
 
-  // Audio streaming
-  static const int audioChunkUploadIntervalSeconds = 30;
-
-  // Cognito config
-  static const String userPoolId = 'us-east-1_QUhSwcEDN';
-  static const String clientId = '7kt3lo1bge59tslkq4r67u05o5';
-  static const String identityPoolId =
-      'us-east-1:4fb622ac-d282-40f5-a232-3e852637a305';
+  // External API Keys
+  static String get owmApiKey => dotenv.env['OWM_KEY'] ?? '';
+  static String get hereApiKey => dotenv.env['HERE_API_KEY'] ?? '';
 }

@@ -3,15 +3,14 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'dart:developer' as dev;
 import '../models/alert_model.dart';
+import '../config/app_config.dart';
 
 class AlertService {
-  static const String _baseUrl =
-      "https://ycr7hmmo89.execute-api.us-east-1.amazonaws.com/dev";
   static const Duration _timeout = Duration(seconds: 15);
 
   Future<AlertResponse?> triggerAlert(AlertRequest request,
       {bool isRetry = false}) async {
-    final url = Uri.parse("$_baseUrl/trigger-alert");
+    final url = Uri.parse(AppConfig.triggerAlertEndpoint);
 
     try {
       dev.log("Triggering alert for user: ${request.userId}");
@@ -43,7 +42,7 @@ class AlertService {
     required String alertId,
     required String response,
   }) async {
-    final url = Uri.parse("$_baseUrl/respond-alert");
+    final url = Uri.parse(AppConfig.respondAlertEndpoint);
 
     try {
       dev.log("Responding to alert $alertId with: $response");
