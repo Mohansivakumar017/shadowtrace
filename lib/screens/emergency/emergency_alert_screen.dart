@@ -86,7 +86,7 @@ class _EmergencyAlertScreenState extends State<EmergencyAlertScreen> {
                         value: _countdown / 10,
                         strokeWidth: 12,
                         color: Colors.white,
-                        backgroundColor: Colors.white.withOpacity(0.2),
+                        backgroundColor: Colors.white.withValues(alpha: 0.2),
                       ),
                     ),
                     Text(

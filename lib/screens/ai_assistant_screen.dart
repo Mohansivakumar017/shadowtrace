@@ -70,9 +70,9 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                     padding: const EdgeInsets.all(14),
                     constraints: const BoxConstraints(maxWidth: 320),
                     decoration: BoxDecoration(
-                      color: isUser ? Colors.cyan.withOpacity(0.18) : Colors.white.withOpacity(0.08),
+                      color: isUser ? Colors.cyan.withValues(alpha: 0.18) : Colors.white.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: Colors.white.withOpacity(0.1)),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                     ),
                     child: Text(m['content'] ?? ''),
                   ),

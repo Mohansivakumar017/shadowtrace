@@ -27,6 +27,10 @@ class Geolocator {
   }
 
   static Future<Position?> getCurrentPosition() async => null;
+
+  static Future<LocationPermission> checkPermission() async {
+    return LocationPermission.denied;
+  }
 }
 
 class LocationSettings {
@@ -44,13 +48,3 @@ class LocationSettings {
 enum LocationAccuracy { best, bestForNavigation, high, medium, low, lowestAccuracy }
 
 enum LocationPermission { denied, deniedForever, unableToDetermine, whileInUse, always }
-
-class Geolocator {
-  static Future<LocationPermission> checkPermission() async {
-    return LocationPermission.denied;
-  }
-
-  static Future<LocationPermission> requestPermission() async {
-    return LocationPermission.denied;
-  }
-}

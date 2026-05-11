@@ -43,12 +43,12 @@ class GuardianAlertScreen extends StatelessWidget {
         const SizedBox(height: 20),
         const Text(
           "INCOMING EMERGENCY",
-          style: TextStyle(color: AppTheme.emergencyRed, fontSize: 24, fontWeight: FontWeight.black, letterSpacing: 2),
+          style: TextStyle(color: AppTheme.emergencyRed, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: 2),
         ),
         const SizedBox(height: 10),
         Text(
           "User: agent_001 is in danger",
-          style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 16),
+          style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 16),
         ),
       ],
     );
@@ -62,7 +62,7 @@ class GuardianAlertScreen extends StatelessWidget {
       blur: 20,
       alignment: Alignment.center,
       border: 2,
-      linearGradient: LinearGradient(colors: [Colors.white.withOpacity(0.1), Colors.white.withOpacity(0.05)]),
+      linearGradient: LinearGradient(colors: [Colors.white.withValues(alpha: 0.1), Colors.white.withValues(alpha: 0.05)]),
       borderGradient: const LinearGradient(colors: [AppTheme.primaryNeonBlue, Colors.transparent]),
       child: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -86,7 +86,7 @@ class GuardianAlertScreen extends StatelessWidget {
       child: ElevatedButton(
         onPressed: onTap,
         style: ElevatedButton.styleFrom(
-          backgroundColor: color.withOpacity(0.15),
+          backgroundColor: color.withValues(alpha: 0.15),
           side: BorderSide(color: color, width: 1.5),
           elevation: 0,
         ),

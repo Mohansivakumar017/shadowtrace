@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
-import 'package:amplify_auth_cognito/amplify_auth_cognito.dart' if (dart.library.html) 'package:amplify_flutter/amplify_flutter.dart';
 
 class AuthService {
   static final AuthService _instance = AuthService._internal();
@@ -130,6 +129,17 @@ class AuthService {
       return await Amplify.Auth.fetchAuthSession();
     } catch (e) {
       debugPrint('Fetch session error: $e');
+      return null;
+    }
+  }
+
+  Future<String?> getCurrentUserId() async {
+    if (kIsWeb) return null;
+    try {
+      final user = await Amplify.Auth.getCurrentUser();
+      return user.userId;
+    } catch (e) {
+      debugPrint('Get user ID error: $e');
       return null;
     }
   }

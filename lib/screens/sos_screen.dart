@@ -52,13 +52,13 @@ class _SosScreenState extends ConsumerState<SosScreen> {
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          Colors.redAccent.withOpacity(0.9),
+                          Colors.redAccent.withValues(alpha: 0.9),
                           Colors.black
                         ],
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.redAccent.withOpacity(0.6),
+                          color: Colors.redAccent.withValues(alpha: 0.6),
                           blurRadius: 24,
                           spreadRadius: 8,
                         )

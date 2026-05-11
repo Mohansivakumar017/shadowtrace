@@ -34,8 +34,8 @@ class AppTheme {
           fontSize: 16,
         ),
       ),
-      cardTheme: CardTheme(
-        color: surfaceDark.withOpacity(0.8),
+      cardTheme: CardThemeData(
+        color: surfaceDark.withValues(alpha: 0.8),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),

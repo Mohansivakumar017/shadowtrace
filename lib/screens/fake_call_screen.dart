@@ -69,7 +69,7 @@ class _FakeCallScreenState extends State<FakeCallScreen> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(28),
               gradient: LinearGradient(colors: [Colors.black, Colors.blueGrey.shade900]),
-              boxShadow: [BoxShadow(color: Colors.cyanAccent.withOpacity(0.15), blurRadius: 30)],
+              boxShadow: [BoxShadow(color: Colors.cyanAccent.withValues(alpha: 0.15), blurRadius: 30)],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,

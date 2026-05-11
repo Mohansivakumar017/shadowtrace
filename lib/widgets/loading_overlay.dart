@@ -11,7 +11,7 @@ class LoadingOverlay extends StatelessWidget {
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
       child: Container(
-        color: Colors.black.withOpacity(0.7),
+        color: Colors.black.withValues(alpha: 0.7),
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,

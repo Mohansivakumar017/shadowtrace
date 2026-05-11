@@ -1,7 +1,7 @@
 import 'package:go_router/go_router.dart';
 import '../screens/sos_screen.dart';
 import '../screens/guardian_alert_screen.dart';
-import '../screens/maps/live_tracking_screen.dart';
+import '../screens/live_tracking_screen.dart';
 import '../screens/splash_screen.dart';
 
 final router = GoRouter(
@@ -21,8 +21,10 @@ final router = GoRouter(
     ),
     GoRoute(
       path: '/tracking',
-      builder: (context, state) => const LiveTrackingScreen(),
+      builder: (context, state) => LiveTrackingScreen(
+        tripId: state.extra is Map ? (state.extra as Map)['tripId'] ?? 'default-trip' : 'default-trip',
+        polyline: state.extra is Map ? (state.extra as Map)['polyline'] ?? [] : [],
+      ),
     ),
   ],
 );
-

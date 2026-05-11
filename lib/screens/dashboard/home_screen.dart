@@ -17,7 +17,7 @@ class HomeScreen extends ConsumerWidget {
             center: Alignment.topLeft,
             radius: 1.5,
             colors: [
-              AppTheme.accentGlow.withOpacity(0.1),
+              AppTheme.accentGlow.withValues(alpha: 0.1),
               AppTheme.backgroundDark,
             ],
           ),
@@ -66,7 +66,7 @@ class HomeScreen extends ConsumerWidget {
               style: TextStyle(
                 fontSize: 12,
                 letterSpacing: 4,
-                color: AppTheme.primaryNeonBlue.withOpacity(0.7),
+                color: AppTheme.primaryNeonBlue.withValues(alpha: 0.7),
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -96,10 +96,10 @@ class HomeScreen extends ConsumerWidget {
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.05),
+            color: Colors.white.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: AppTheme.primaryNeonBlue.withOpacity(0.2),
+              color: AppTheme.primaryNeonBlue.withValues(alpha: 0.2),
               width: 1,
             ),
           ),
@@ -139,7 +139,7 @@ class HomeScreen extends ConsumerWidget {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryNeonBlue.withOpacity(0.3),
+            color: AppTheme.primaryNeonBlue.withValues(alpha: 0.3),
             blurRadius: 15,
             spreadRadius: 2,
           ),
@@ -238,7 +238,7 @@ class HomeScreen extends ConsumerWidget {
           color: AppTheme.emergencyRed,
           boxShadow: [
             BoxShadow(
-              color: AppTheme.emergencyRed.withOpacity(0.5),
+              color: AppTheme.emergencyRed.withValues(alpha: 0.5),
               blurRadius: 20,
               spreadRadius: 5,
             ),

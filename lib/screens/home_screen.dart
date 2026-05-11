@@ -45,8 +45,8 @@ class HomeScreen extends StatelessWidget {
                     padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(24),
-                      gradient: LinearGradient(colors: [Colors.cyanAccent.withOpacity(0.12), Colors.white.withOpacity(0.03)]),
-                      border: Border.all(color: Colors.white.withOpacity(0.10)),
+                      gradient: LinearGradient(colors: [Colors.cyanAccent.withValues(alpha: 0.12), Colors.white.withValues(alpha: 0.03)]),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,9 +58,9 @@ class HomeScreen extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           decoration: BoxDecoration(
-                            color: isGuest ? Colors.amber.withOpacity(0.14) : Colors.cyanAccent.withOpacity(0.12),
+                            color: isGuest ? Colors.amber.withValues(alpha: 0.14) : Colors.cyanAccent.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: Colors.white.withOpacity(0.08)),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
                           ),
                           child: Text(
                             isGuest ? 'Guest mode: live monitoring and SOS alerts only' : 'Authenticated mode: full guardian and travel tracking access',
@@ -111,8 +111,8 @@ class HomeScreen extends StatelessWidget {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(22),
                             color: const Color(0xFF0C1220),
-                            border: Border.all(color: Colors.white.withOpacity(0.08)),
-                            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.35), blurRadius: 16, offset: const Offset(0, 8))],
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.35), blurRadius: 16, offset: const Offset(0, 8))],
                           ),
                           padding: const EdgeInsets.all(16),
                           child: Column(

@@ -26,7 +26,7 @@ class FcmTokenNotifier extends StateNotifier<String?> {
       state = token;
       if (token != null) await _uploadToken(token);
 
-      FirebaseMessaging.onTokenRefresh.listen((newToken) async {
+      _messaging.onTokenRefresh.listen((newToken) async {
         state = newToken;
         if (newToken != null) await _uploadToken(newToken);
       });
@@ -36,7 +36,7 @@ class FcmTokenNotifier extends StateNotifier<String?> {
   }
 
   Future<void> _uploadToken(String token) async {
-    final api = const String.fromEnvironment('AWS_API_GATEWAY_URL', defaultValue: '');
+    const api = String.fromEnvironment('AWS_API_GATEWAY_URL', defaultValue: '');
     if (api.isEmpty) return;
     try {
       await _dio.post('$api/registerDeviceToken', data: {'token': token});

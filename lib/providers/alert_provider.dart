@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:vibration/vibration.dart';
 import '../models/alert_model.dart';
@@ -35,8 +35,11 @@ class AlertProvider with ChangeNotifier {
 
     try {
       // 2. Immediate Haptic & Sound Feedback
-      if (!kIsWeb && await Vibration.hasVibrator() ?? false) {
-        Vibration.vibrate(pattern: [500, 200, 500, 200], intensities: [255, 255]);
+      if (!kIsWeb) {
+        final hasVibrator = await Vibration.hasVibrator() ?? false;
+        if (hasVibrator) {
+          Vibration.vibrate(pattern: [500, 200, 500, 200], intensities: [255, 255]);
+        }
       }
 
       _soundService.playEmergencySiren();
@@ -79,7 +82,7 @@ class AlertProvider with ChangeNotifier {
 
     if (responseType == "SAFE_NOW") {
       _activeAlertId = null;
-      _soundService.stopEmergencySiren();
+      _soundService.stopSiren();
     }
 
     _isLoading = false;

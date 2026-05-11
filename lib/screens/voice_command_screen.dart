@@ -146,7 +146,7 @@ class _VoiceCommandScreenState extends State<VoiceCommandScreen> {
                         boxShadow: [
                           BoxShadow(
                             color: (_isListening ? Colors.red : Colors.blue)
-                                .withOpacity(0.5),
+                                .withValues(alpha: 0.5),
                             blurRadius: 20,
                             spreadRadius: 5,
                           ),

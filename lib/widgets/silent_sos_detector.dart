@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import '../services/sos_service.dart';
 import '../services/location_service.dart';
+import '../services/auth_service.dart';
 import '../config/feature_flags.dart';
 
 class SilentSOSDetector extends StatefulWidget {
@@ -14,8 +15,9 @@ class SilentSOSDetector extends StatefulWidget {
 }
 
 class _SilentSOSDetectorState extends State<SilentSOSDetector> {
-  final SOSService _sosService = SOSService();
+  final SosService _sosService = SosService();
   final LocationService _locationService = LocationService();
+  final AuthService _authService = AuthService();
 
   int _pressCount = 0;
   Timer? _pressResetTimer;
@@ -56,10 +58,18 @@ class _SilentSOSDetectorState extends State<SilentSOSDetector> {
   Future<void> _triggerSilentSOS() async {
     final location = _locationService.getLastKnownPosition();
     if (location != null) {
-      final alertId = await _sosService.triggerSOS(location.latitude, location.longitude);
+      final userId = await _authService.getCurrentUserId();
+      if (userId != null) {
+        final result = await _sosService.triggerSOS(
+          userId: userId,
+          triggerType: 'silent',
+          lat: location.latitude,
+          lng: location.longitude,
+        );
 
-      if (mounted && alertId != null) {
-        _showConfirmationOverlay();
+        if (mounted && result['error'] == null) {
+          _showConfirmationOverlay();
+        }
       }
     }
   }
