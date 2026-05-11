@@ -1,0 +1,59 @@
+name: Lint & Code Quality
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.16.0'
+
+    - name: Get dependencies
+      run: flutter pub get
+
+    - name: Run Flutter Analyze
+      run: flutter analyze
+
+    - name: Check for unused imports
+      run: |
+        flutter pub global activate dart_code_metrics
+        dart_code_metrics analyze lib --fatal-style --fatal-warnings
+
+    - name: Format check
+      run: |
+        dart format --set-exit-if-changed lib/
+
+  backend_lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: Install backend dependencies
+      run: cd backend && npm install
+
+    - name: Run ESLint
+      run: |
+        cd backend
+        npx eslint . --ext .js || true
+        echo "ESLint check completed"
+
+    - name: Check for security vulnerabilities
+      run: |
+        cd backend
+        npm audit --production || true
