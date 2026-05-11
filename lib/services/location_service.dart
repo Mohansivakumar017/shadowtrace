@@ -41,7 +41,7 @@ class LocationService {
     if (!hasPermission) return;
 
     _positionStream = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
+      locationSettings: LocationSettings(
         accuracy: LocationAccuracy.best,
         distanceFilter: 10,
         timeLimit: Duration(seconds: AppConfig.locationPollIntervalSeconds),
