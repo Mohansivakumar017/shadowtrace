@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShadowTrace Admin Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            color: #667eea;
+        }
+
+        .logout-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .logout-btn:hover {
+            background: #ff5252;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 12px;
+            padding: 48px;
+            max-width: 400px;
+            margin: 60px auto;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .login-container h2 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 32px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .login-btn:hover {
+            background: #5568d3;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            color: #666;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+
+        .stat-card .value {
+            font-size: 36px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .alerts-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .alerts-header {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .alerts-header h2 {
+            color: #333;
+            font-size: 18px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-acknowledged {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-resolved {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .resolve-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .resolve-btn:hover {
+            background: #218838;
+        }
+
+        .last-updated {
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            margin-top: 20px;
+            padding: 20px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="loginContainer" class="login-container" style="display: none;">
+            <h2>Admin Dashboard Login</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="token">JWT Token</label>
+                    <input type="password" id="token" placeholder="Paste your JWT token" required>
+                </div>
+                <button type="submit" class="login-btn">Login</button>
+            </form>
+        </div>
+
+        <div id="dashboardContainer" style="display: none;">
+            <div class="header">
+                <h1>ShadowTrace Admin Dashboard</h1>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Active Trips</h3>
+                    <div class="value" id="activeTrips">-</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Alerts Today</h3>
+                    <div class="value" id="alertsToday">-</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Active SOS</h3>
+                    <div class="value" id="activeSOS">-</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Users Online</h3>
+                    <div class="value" id="usersOnline">-</div>
+                </div>
+            </div>
+
+            <div class="alerts-container">
+                <div class="alerts-header">
+                    <h2>Recent Alerts</h2>
+                </div>
+                <div id="alertsTableContainer">
+                    <div class="loading">Loading alerts...</div>
+                </div>
+                <div class="last-updated">
+                    Last updated: <span id="lastUpdate">-</span> | Auto-refresh: 30s
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = localStorage.getItem('apiBase') || 'https://ycr7hmmo89.execute-api.us-east-1.amazonaws.com/dev';
+        let token = localStorage.getItem('adminToken');
+
+        window.addEventListener('load', () => {
+            if (token && token.trim()) {
+                showDashboard();
+                loadStats();
+                loadAlerts();
+                setInterval(() => {
+                    loadStats();
+                    loadAlerts();
+                    updateLastRefresh();
+                }, 30000);
+            } else {
+                showLogin();
+            }
+        });
+
+        function showLogin() {
+            document.getElementById('loginContainer').style.display = 'block';
+            document.getElementById('dashboardContainer').style.display = 'none';
+            document.getElementById('loginForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                token = document.getElementById('token').value.trim();
+                localStorage.setItem('adminToken', token);
+                showDashboard();
+                loadStats();
+                loadAlerts();
+                setInterval(loadStats, 30000);
+                setInterval(loadAlerts, 30000);
+            });
+        }
+
+        function showDashboard() {
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('dashboardContainer').style.display = 'block';
+        }
+
+        function logout() {
+            localStorage.removeItem('adminToken');
+            token = null;
+            showLogin();
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_BASE}/admin/stats`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                document.getElementById('activeTrips').textContent = data.activeTrips || '0';
+                document.getElementById('alertsToday').textContent = data.alertsToday || '0';
+                document.getElementById('activeSOS').textContent = data.activeSOS || '0';
+                document.getElementById('usersOnline').textContent = data.usersOnline || '0';
+            } catch (error) {
+                console.error('Load stats error:', error);
+            }
+        }
+
+        async function loadAlerts() {
+            try {
+                const response = await fetch(`${API_BASE}/admin/alerts`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                const alerts = data.alerts || [];
+
+                if (alerts.length === 0) {
+                    document.getElementById('alertsTableContainer').innerHTML =
+                        '<div class="loading">No alerts</div>';
+                    return;
+                }
+
+                let html = '<table><thead><tr><th>ID</th><th>User</th><th>Type</th><th>Location</th><th>Time</th><th>Status</th><th>Action</th></tr></thead><tbody>';
+
+                alerts.forEach(alert => {
+                    const time = new Date(alert.timestamp).toLocaleString();
+                    const statusClass = `status-${alert.status.toLowerCase()}`;
+                    html += `<tr>
+                        <td>${alert.alertId}</td>
+                        <td>${alert.userId}</td>
+                        <td>${alert.type}</td>
+                        <td>${alert.lat?.toFixed(4)}, ${alert.lng?.toFixed(4)}</td>
+                        <td>${time}</td>
+                        <td><span class="status-badge ${statusClass}">${alert.status}</span></td>
+                        <td><button class="resolve-btn" onclick="resolveAlert('${alert.alertId}')">Resolve</button></td>
+                    </tr>`;
+                });
+
+                html += '</tbody></table>';
+                document.getElementById('alertsTableContainer').innerHTML = html;
+                updateLastRefresh();
+            } catch (error) {
+                console.error('Load alerts error:', error);
+            }
+        }
+
+        async function resolveAlert(alertId) {
+            try {
+                await fetch(`${API_BASE}/respond-alert`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ alertId, response: 'resolved' })
+                });
+                loadAlerts();
+            } catch (error) {
+                console.error('Resolve alert error:', error);
+            }
+        }
+
+        function updateLastRefresh() {
+            document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+        }
+    </script>
+</body>
+</html>
