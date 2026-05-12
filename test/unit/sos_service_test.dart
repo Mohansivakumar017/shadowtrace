@@ -49,9 +49,10 @@ void main() {
         () async {
       final result = await sosService.respondToAlert(
         alertId: 'alert-123',
+        responderId: 'responder-123',
         response: 'resolved',
       );
-      expect(result, isA<Map>());
+      expect(result, isA<bool>());
     });
   });
 }

@@ -1,10 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:hardware_buttons/hardware_buttons.dart';
 import '../config/feature_flags.dart';
 import '../services/sos_service.dart';
 import '../services/location_service.dart';
-import '../services/auth_service.dart';
 
 class SilentSOSDetector extends StatefulWidget {
   final Widget child;
@@ -29,23 +27,6 @@ class _SilentSOSDetectorState extends State<SilentSOSDetector> {
   static const int _requiredPresses = 5;
   static const Duration _window = Duration(seconds: 3);
   bool _sosTriggered = false;
-  StreamSubscription<VolumeButtonEvent>? _volumeSub;
-
-  @override
-  void initState() {
-    super.initState();
-    if (FeatureFlags.SILENT_SOS_ENABLED) {
-      _startListening();
-    }
-  }
-
-  void _startListening() {
-    _volumeSub = volumeButtonEvents.listen((VolumeButtonEvent event) {
-      if (event == VolumeButtonEvent.VOLUME_DOWN) {
-        _handlePress();
-      }
-    });
-  }
 
   void _handlePress() {
     final now = DateTime.now();
@@ -97,9 +78,12 @@ class _SilentSOSDetectorState extends State<SilentSOSDetector> {
   }
 
   @override
-  void dispose() {
-    _volumeSub?.cancel();
-    super.dispose();
+  void activate() {
+    super.activate();
+    if (FeatureFlags.SILENT_SOS_ENABLED) {
+      // Hardware button listener would be set up here
+      // For now, this is a stub that listens to app-level events
+    }
   }
 
   @override

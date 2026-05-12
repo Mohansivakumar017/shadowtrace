@@ -48,8 +48,7 @@ dependencies:
   vibration: ^1.8.4
   flutter_local_notifications: ^17.2.2
   permission_handler: ^12.0.0+1
-  hardware_buttons: ^0.7.0
-  local_auth: ^4.0.0
+  local_auth: ^2.2.0
   flutter_blue_plus: ^1.30.0
 
   # Firebase
@@ -59,6 +58,12 @@ dependencies:
   # Audio
   just_audio: ^0.9.34
   record: ^5.0.0
+
+  # Camera
+  camera: ^0.10.5
+
+  # URL Launcher
+  url_launcher: ^6.2.0
 
   # UI & Utilities
   cupertino_icons: ^1.0.2

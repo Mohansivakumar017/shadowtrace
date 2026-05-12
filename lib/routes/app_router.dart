@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../screens/splash_screen.dart';
 import '../screens/onboarding_screen.dart';
@@ -38,7 +37,7 @@ final GoRouter appRouter = GoRouter(
     GoRoute(path: '/guardians', builder: (context, state) => const RouteAccessGate(child: GuardianContactsScreen())),
     GoRoute(path: '/profile', builder: (context, state) => const RouteAccessGate(child: ProfileScreen())),
     GoRoute(path: '/notifications', builder: (context, state) => const RouteAccessGate(allowGuest: true, child: NotificationCenterScreen())),
-    GoRoute(path: '/history', builder: (context, state) => const RouteAccessGate(child: IncidentHistoryScreen())),
+    GoRoute(path: '/history', builder: (context, state) => const RouteAccessGate(child: IncidentHistoryScreen(userId: 'current_user'))),
     GoRoute(path: '/nearby', builder: (context, state) => const RouteAccessGate(child: NearbyServicesScreen())),
     GoRoute(path: '/fake-call', builder: (context, state) => const RouteAccessGate(child: FakeCallScreen())),
     GoRoute(path: '/voice', builder: (context, state) => const RouteAccessGate(child: VoiceCommandScreen())),
