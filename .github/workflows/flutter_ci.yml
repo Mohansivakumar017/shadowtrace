@@ -2,125 +2,143 @@ name: Flutter CI/CD
 
 on:
   push:
-    branches: [main, develop]
+    branches:
+      - main
+      - develop
+
   pull_request:
-    branches: [main, develop]
+    branches:
+      - main
+      - develop
 
 jobs:
+
   test-and-analyze:
     name: Test & Analyze
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Flutter
+      - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.0'
+          flutter-version: '3.22.0'
           channel: stable
+          cache: true
 
-      - name: Install dependencies
+      - name: Verify Flutter Version
+        run: flutter --version
+
+      - name: Clean Project
+        run: flutter clean
+
+      - name: Install Dependencies
         run: flutter pub get
 
-      - name: Run analyzer
-        run: flutter analyze --no-fatal-infos
+      - name: Analyze Project
+        run: flutter analyze
 
-      - name: Run tests with coverage
+      - name: Run Flutter Tests
         run: flutter test --coverage
 
-      - name: Upload coverage to codecov
-        uses: codecov/codecov-action@v3
+      - name: Upload Coverage Reports
+        uses: codecov/codecov-action@v4
         with:
-          files: ./coverage/lcov.info
-          flags: flutter
-          name: flutter-coverage
+          files: coverage/lcov.info
+          fail_ci_if_error: false
 
   build-android:
     name: Build Android APK
     runs-on: ubuntu-latest
     needs: test-and-analyze
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    if: github.event_name == 'push' &&
+        github.ref == 'refs/heads/main'
 
     steps:
+
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Flutter
+      - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.0'
+          flutter-version: '3.22.0'
           channel: stable
+          cache: true
 
-      - name: Install dependencies
+      - name: Install Dependencies
         run: flutter pub get
 
-      - name: Build APK release
+      - name: Build Release APK
         run: flutter build apk --release
 
-      - name: Upload APK artifact
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-release.apk
+          name: shadowtrace-apk
           path: build/app/outputs/flutter-apk/app-release.apk
 
   build-ios:
     name: Build iOS App
     runs-on: macos-latest
     needs: test-and-analyze
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    if: github.event_name == 'push' &&
+        github.ref == 'refs/heads/main'
 
     steps:
+
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Flutter
+      - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.0'
+          flutter-version: '3.22.0'
           channel: stable
+          cache: true
 
-      - name: Install dependencies
+      - name: Install Dependencies
         run: flutter pub get
 
-      - name: Build iOS release
+      - name: Build iOS Release
         run: flutter build ios --release --no-codesign
 
-      - name: Upload iOS artifact
+      - name: Upload iOS Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ios-build
+          name: shadowtrace-ios
           path: build/ios/iphoneos/Runner.app
 
   deploy:
-    name: Deploy to Production
+    name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: [build-android, build-ios]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    needs:
+      - build-android
+
+    if: github.event_name == 'push' &&
+        github.ref == 'refs/heads/main'
 
     steps:
-      - name: Download APK
+
+      - name: Download APK Artifact
         uses: actions/download-artifact@v4
         with:
-          name: app-release.apk
+          name: shadowtrace-apk
 
       - name: Create Release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        id: create_release
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ github.run_number }}
-          release_name: Release v${{ github.run_number }}
-          draft: false
-          prerelease: false
+          name: ShadowTrace Release v${{ github.run_number }}
 
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload APK to Release
+        uses: softprops/action-gh-release@v2
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./app-release.apk
-          asset_name: shadowtrace-v${{ github.run_number }}.apk
-          asset_content_type: application/vnd.android.package-archive
+          files: app-release.apk
