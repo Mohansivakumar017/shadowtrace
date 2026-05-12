@@ -24,6 +24,11 @@ class AppConfig {
   static String get tripEndpoint => '$apiBaseUrl/trip';
   static String get devicePositionEndpoint => '$apiBaseUrl/device-position';
 
+  // WebSocket endpoint
+  static String get websocketUrl =>
+      dotenv.env['WEBSOCKET_URL'] ??
+      'wss://YOUR_API_ID.execute-api.us-east-1.amazonaws.com/dev';
+
   // AWS Configuration
   static String get awsRegion => dotenv.env['AWS_REGION'] ?? 'us-east-1';
   static String get alsTrackerName =>
