@@ -13,7 +13,6 @@ class SoundService {
     if (_isAlarmPlaying) return;
     dev.log("📢 Triggering existing Emergency Siren...");
 
-    // TODO: CALL YOUR EXISTING SOUND METHOD HERE
     // Example: ExistingSoundPlugin.play('assets/sounds/siren.mp3');
 
     _isAlarmPlaying = true;
@@ -22,7 +21,6 @@ class SoundService {
   void stopSiren() {
     dev.log("🔇 Silencing Siren...");
 
-    // TODO: CALL YOUR EXISTING STOP METHOD HERE
     // Example: ExistingSoundPlugin.stop();
 
     _isAlarmPlaying = false;
